@@ -15,21 +15,21 @@ void Maquina(float t, int EstadoBoton1, int EstadoBoton2);
 #define DHTPIN 23
 #define DHTTYPE DHT11
 #define P1 200
-#define P2 300
-#define ESPERA 400
-#define SUMAGMT 500
-#define RESTAGMT 600
+#define P2 201
+#define ESPERA 202
+#define SUMAGMT 203
+#define RESTAGMT 204
 #define BOTON1 35
 #define BOTON2 34
 const char *ssid = "ORT-IoT";
 const char *password = "NuevaIOT$25";
-int hora;
-int minute;
+const char *ntpServer = "pool.ntp.org";
 int boton1;
 int boton2;
 bool resta;
 bool suma;
-ESP32Time rtc(0);
+int gmt = 0;
+ESP32Time rtc(gmt);
 int estado;
 bool PASAJE = false;
 DHT dht(DHTPIN, DHTTYPE);
@@ -41,8 +41,10 @@ void setup() {
   pinMode(BOTON2, INPUT_PULLUP);
   u8g2.begin();
   dht.begin();
-  hora = rtc.getHour();
-  minute = rtc.getMinute();
+  WiFi.softAP(ssid, password);
+  IPAddress IP = WiFi.softAPIP();
+  WiFi.begin(ssid, password);
+  rtc.setTimeStruct(timeinfo);
   suma = true;
   resta = true;
   estado = P1;
@@ -61,7 +63,11 @@ void Maquina(float t, int EstadoBoton1, int EstadoBoton2) {
   sprintf(stringt, "%.2f", t);
   switch (estado) {
     case P1:
-      sprintf(stringtiempo, "%02d:%02d  ", hora, minute);
+      int hora=rtc.getHour();
+      int minute=rtc.getMinute();
+      int second=rtc.getSecond();
+      ESP32Time rtc(-10800);
+      sprintf(stringtiempo, "%02d:%02d:%02d", hora, minute,second);
       u8g2.clearBuffer();
       u8g2.setFont(u8g2_font_ncenB08_tr);
       u8g2.drawStr(15, 15, "Temp:");
@@ -85,6 +91,7 @@ void Maquina(float t, int EstadoBoton1, int EstadoBoton2) {
       }
       break;
     case P2:
+      ESP32Time rtc(gmt);
       sprintf(stringtiempo, "%02d:%02d  ", hora, minute);
       u8g2.clearBuffer();
       u8g2.drawStr(15, 30, "Hora:");
@@ -102,18 +109,24 @@ void Maquina(float t, int EstadoBoton1, int EstadoBoton2) {
       }
       break;
     case SUMAGMT:
+      if (gmt < 43200) {
+        suma = true;
+      }
       if (suma == true) {
-        gmt = gmt + 1;
-        if (gmt == 12) {
+        gmt = gmt + 3600;
+        if (gmt == 43200) {
           suma = false;
         }
         estado = P2;
         break;
 
         case RESTAGMT:
+          if (gmt > -43200) {
+            resta = true;
+          }
           if (resta == true) {
-            gmt = gmt - 1;
-            if (gmt == -12) {
+            gmt = gmt - 3600;
+            if (gmt == -43200) {
               resta = false;
             }
             estado = P2;
@@ -121,3 +134,4 @@ void Maquina(float t, int EstadoBoton1, int EstadoBoton2) {
           break;
       }
   }
+}
