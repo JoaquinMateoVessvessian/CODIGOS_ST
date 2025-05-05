@@ -16,12 +16,6 @@ void setup() {
 
 void loop() {
   t=dht.readTemperature();
-  if(t>28){
-    digitalWrite(26,HIGH);
-  }
-  else{
-    digitalWrite(26,LOW);
-  }
   sprintf(stringt, "%.2f", t);
   u8g2.clearBuffer();
   u8g2.setFont(u8g2_font_ncenB08_tr);
