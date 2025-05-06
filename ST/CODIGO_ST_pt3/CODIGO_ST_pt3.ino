@@ -14,6 +14,7 @@ char stringt[6];
 void setup() {
   Serial.begin(9600);
   Serial.println(F("OLED test"));
+  pinMode(25,OUTPUT);
   u8g2.begin();
   dht.begin();
 }
@@ -21,10 +22,10 @@ void setup() {
 void loop() {
   t=dht.readTemperature();
   if(t>28){
-    digitalWrite(26,HIGH);
+    digitalWrite(25,HIGH);
   }
   else{
-    digitalWrite(26,LOW);
+    digitalWrite(25,LOW);
   }
   sprintf(stringt, "%.2f", t);
   u8g2.clearBuffer();
