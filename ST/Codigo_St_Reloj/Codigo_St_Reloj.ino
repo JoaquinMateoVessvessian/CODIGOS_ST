@@ -10,7 +10,7 @@
 
 #include <Adafruit_Sensor.h>
 U8G2_SH1106_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset=*/U8X8_PIN_NONE);
-void Maquina(float t, int EstadoBoton1, int EstadoBoton2);
+void Maquina(float t, int EstadoBoton1, int EstadoBoton2); 
 #define DHTPIN 23
 #define DHTTYPE DHT11
 #define P1 200
@@ -29,20 +29,20 @@ int estado;
 bool PASAJE = false;
 DHT dht(DHTPIN, DHTTYPE);
 void setup() {
-  Serial.begin(9600);
-  rtc.setTime(30, 38, 11, 25, 4, 2025);
+  Serial.begin(9600); 
+  rtc.setTime(30, 38, 11, 25, 4, 2025); //SETEO UNA HORA ESPECIFICA, SEGUNDOS, MINUTOS, HORAS, DIA, MES, AÑO
   Serial.println(F("OLED test"));
   pinMode(BOTON1, INPUT_PULLUP);
   pinMode(BOTON2, INPUT_PULLUP);
-  u8g2.begin();
-  dht.begin();
-  hora = rtc.getHour();
-  minute = rtc.getMinute();
+  u8g2.begin(); //INICIALIZO EL OLED
+  dht.begin(); //INICIALIZO EL SENSOR DE TEMPERATURA
+  hora = rtc.getHour(); //ME GUARDO LA HORA QUE ESTABA SETEADA
+  minute = rtc.getMinute(); //ME GUARDO LOS MINUTOS QUE ESTABAN SETEADOS
   estado = P1;
 }
 
 void loop() {
-  float t = dht.readTemperature();
+  float t = dht.readTemperature(); 
   boton1 = digitalRead(BOTON1);
   boton2 = digitalRead(BOTON2);
   Maquina(t, boton1, boton2);
@@ -51,18 +51,18 @@ void loop() {
 void Maquina(float t, int EstadoBoton1, int EstadoBoton2) {
   char stringt[6];
   char stringtiempo[10];
-  sprintf(stringt, "%.2f", t);
+  sprintf(stringt, "%.2f", t); // HAGO QUE LA TEMPERATURA SE PUEDA GUARDAR COMO UN STRING 
   switch (estado) {
     case P1:
-      sprintf(stringtiempo, "%02d:%02d  ", hora, minute);
-      u8g2.clearBuffer();
-      u8g2.setFont(u8g2_font_ncenB08_tr);
+      sprintf(stringtiempo, "%02d:%02d  ", hora, minute); //HAGO QUE EL HORARIO SE PUEDA GUARDAR COMO UN STRING TENIENDO LOS DOS VALORES
+      u8g2.clearBuffer(); //REINICIO EL OLED PARA QUE NO SE VEA NADA
+      u8g2.setFont(u8g2_font_ncenB08_tr); //LE PONGO UNA FUENTE DE TEXTO Y TAMAÑO, COMO SI FUERA EL COMIC SANS
       u8g2.drawStr(15, 15, "Temp:");
-      u8g2.drawStr(60, 15, stringt);
+      u8g2.drawStr(60, 15, stringt); //REPRESENTO LA TEMPERATURA
       u8g2.drawStr(15, 30, "Hora:");
-      u8g2.drawStr(60, 30, stringtiempo);
-      u8g2.sendBuffer();
-      PASAJE = true;
+      u8g2.drawStr(60, 30, stringtiempo); //REPRESENTO EL TIEMPO
+      u8g2.sendBuffer(); //HACE QUE LO QUE GUARDE EN EL OLED SE ENVIE HACIA EL OLED Y SE PUEDA VER
+      PASAJE = true; //LO USO PARA QUE PASE O DE P1 A P2 O DE P2 A P1
       if (EstadoBoton1 == LOW && EstadoBoton2 == LOW) {
         estado = ESPERA;
       }
@@ -81,14 +81,14 @@ void Maquina(float t, int EstadoBoton1, int EstadoBoton2) {
       sprintf(stringtiempo, "%02d:%02d  ", hora, minute);
       u8g2.clearBuffer();
       u8g2.drawStr(15, 30, "Hora:");
-      u8g2.drawStr(60, 30, stringtiempo);
+      u8g2.drawStr(60, 30, stringtiempo); //PONGO EL HORARIO EN EL OLED
       if (EstadoBoton1 == LOW) {
         estado = SUMAHORA;
       }
       if (EstadoBoton2 == LOW) {
         estado = SUMAMIN;
       }
-      u8g2.sendBuffer();
+      u8g2.sendBuffer(); //HACE QUE LO QUE GUARDE EN EL OLED SE ENVIE HACIA EL OLED Y SE PUEDA VER 
       PASAJE = false;
       if (EstadoBoton1 == LOW && EstadoBoton2 == LOW) {
         estado = ESPERA;
