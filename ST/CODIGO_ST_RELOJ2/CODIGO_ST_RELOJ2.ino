@@ -19,17 +19,17 @@
 #define BOTON1 35
 #define BOTON2 34
 
-const char *ssid = "ORT-IoT";
-const char *password = "NuevaIOT$25";
-const char *ntpServer = "pool.ntp.org";
+const char *ssid = "ORT-IoT"; //ESTABLEZCO LA ID DEL WIFI
+const char *password = "NuevaIOT$25"; //ESTABLEZCO LA CONTRASEÑA
+const char *ntpServer = "pool.ntp.org"; //ES EL SERVER DEL WIFI
 
 int boton1, boton2;
 bool resta, suma;
 int gmt = 0;
 int estado;
 
-ESP32Time rtc(gmt);
-WiFiServer server(80);
+ESP32Time rtc(gmt); //SE ESTABLECE LA GMT(LA FRANJA HORARIA) Y AHORA ES 0
+WiFiServer server(80); 
 DHT dht(DHTPIN, DHTTYPE);
 U8G2_SH1106_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset = */ U8X8_PIN_NONE);
 
@@ -46,8 +46,8 @@ void setup() {
   WiFi.begin(ssid, password);
   delay(100);
 
-  if (WiFi.status() == WL_CONNECTED) {
-    configTime(0, 0, ntpServer);
+  if (WiFi.status() == WL_CONNECTED) { 
+    configTime(0, 0, ntpServer); 
     struct tm timeinfo;
     if (getLocalTime(&timeinfo)) {
       rtc.setTimeStruct(timeinfo);
@@ -73,10 +73,10 @@ void Maquina(float t, int EstadoBoton1, int EstadoBoton2) {
   char stringgmt[3];
   sprintf(stringt, "%.2f", t);
 
-  rtc = ESP32Time(gmt);
-  int hora = rtc.getHour(true);
-  int minute = rtc.getMinute();
-  int second = rtc.getSecond();
+  rtc = ESP32Time(gmt); //guardo en RTC el tiempo respecto al gmt
+  int hora = rtc.getHour(true); //SE GUARDA LA HORA 
+  int minute = rtc.getMinute(); //SE GUARDAN LOS MINUTOS
+  int second = rtc.getSecond(); //SE GUARDAN LOS SEGUNDOS
   sprintf(stringtiempo, "%02d:%02d:%02d", hora, minute, second);
 
   switch (estado) {
