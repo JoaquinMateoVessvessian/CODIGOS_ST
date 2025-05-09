@@ -14,7 +14,6 @@
 #define RESTAGMT 205
 #define BOTON1 35
 #define BOTON2 34
-
 const char *ssid = "ORT-IoT";
 const char *password = "NuevaIOT$25";
 const char *ntpServer = "pool.ntp.org";
@@ -22,7 +21,7 @@ const int daylightOffset_sec = 3600;
 
 int boton1;
 int boton2;
-int gmt = -3 * 3600; //empieza en arg  
+int gmt = -4 * 3600; //empieza en arg  
 int estado;
 
 WiFiServer server(80);
