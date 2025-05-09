@@ -17,11 +17,11 @@
 const char *ssid = "ORT-IoT";
 const char *password = "NuevaIOT$25";
 const char *ntpServer = "pool.ntp.org";
-const int daylightOffset_sec = 3600;
+const int daylightOffset_sec = 0;
 
 int boton1;
 int boton2;
-int gmt = -4 * 3600; //empieza en arg  
+int gmt = -3 * 3600; //empieza en arg  
 int estado;
 
 WiFiServer server(80);
