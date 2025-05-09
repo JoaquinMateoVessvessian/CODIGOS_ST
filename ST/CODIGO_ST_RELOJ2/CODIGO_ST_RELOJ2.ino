@@ -24,7 +24,6 @@ const char *password = "NuevaIOT$25"; //ESTABLEZCO LA CONTRASEÑA
 const char *ntpServer = "pool.ntp.org"; //ES EL SERVER DEL WIFI
 
 int boton1, boton2;
-bool resta, suma;
 int gmt = 0;
 int estado;
 
@@ -53,8 +52,6 @@ void setup() {
       rtc.setTimeStruct(timeinfo);
     } 
 
-  suma = true;
-  resta = true;
   estado = P1;
 }
 
