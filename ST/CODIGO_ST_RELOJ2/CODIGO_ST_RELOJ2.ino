@@ -1,11 +1,7 @@
-// VESSVESSIAN, BAIRROS, KANG, SAGGIORATTO
-
 #include <WiFi.h>
-#include <ESP32Time.h>
+#include "time.h"
 #include <U8g2lib.h>
 #include <U8x8lib.h>
-#include <DHT.h>
-#include <DHT_U.h>
 #include <Adafruit_Sensor.h>
 
 #define DHTPIN 23
@@ -19,72 +15,63 @@
 #define BOTON1 35
 #define BOTON2 34
 
-const char *ssid = "ORT-IoT"; //ESTABLEZCO LA ID DEL WIFI
-const char *password = "NuevaIOT$25"; //ESTABLEZCO LA CONTRASEÑA
-const char *ntpServer = "pool.ntp.org"; //ES EL SERVER DEL WIFI
+const char *ssid = "ORT-IoT";
+const char *password = "NuevaIOT$25";
+const char *ntpServer = "pool.ntp.org";
+const int daylightOffset_sec = 3600;
 
-int boton1, boton2;
-int gmt = 0;
+int boton1;
+int boton2;
+int gmt = -3 * 3600; //empieza en arg  
 int estado;
 
-ESP32Time rtc(gmt); //SE ESTABLECE LA GMT(LA FRANJA HORARIA) Y AHORA ES 0
-WiFiServer server(80); 
-DHT dht(DHTPIN, DHTTYPE);
+WiFiServer server(80);
 U8G2_SH1106_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset = */ U8X8_PIN_NONE);
 
-void Maquina(float t, int EstadoBoton1, int EstadoBoton2);
+void Maquina(int EstadoBoton1, int EstadoBoton2);
 
 void setup() {
   Serial.begin(9600);
   pinMode(BOTON1, INPUT_PULLUP);
   pinMode(BOTON2, INPUT_PULLUP);
-
   u8g2.begin();
-  dht.begin();
-
   WiFi.begin(ssid, password);
   delay(100);
+  configTime(gmt, daylightOffset_sec, ntpServer);
 
-  if (WiFi.status() == WL_CONNECTED) { 
-    configTime(0, 0, ntpServer); 
-    struct tm timeinfo;
-    if (getLocalTime(&timeinfo)) {
-      rtc.setTimeStruct(timeinfo);
-    } 
+  struct tm timeinfo;
+  while (!getLocalTime(&timeinfo)) {
+    delay(500);  // Espera hasta que se sincronice la hora
+  }
 
   estado = P1;
+
+  WiFi.disconnect(true);
+  WiFi.mode(WIFI_OFF);
 }
 
-}
 void loop() {
-  float t = dht.readTemperature();
   boton1 = digitalRead(BOTON1);
   boton2 = digitalRead(BOTON2);
-  Maquina(t, boton1, boton2);
+  Maquina(boton1, boton2);
   delay(100);
 }
 
-void Maquina(float t, int EstadoBoton1, int EstadoBoton2) {
-  char stringt[6];
-  char stringtiempo[10];
-  char stringgmt[3];
-  sprintf(stringt, "%.2f", t);
-
-  rtc = ESP32Time(gmt); //guardo en RTC el tiempo respecto al gmt
-  int hora = rtc.getHour(true); //SE GUARDA LA HORA 
-  int minute = rtc.getMinute(); //SE GUARDAN LOS MINUTOS
-  int second = rtc.getSecond(); //SE GUARDAN LOS SEGUNDOS
-  sprintf(stringtiempo, "%02d:%02d:%02d", hora, minute, second);
+void Maquina(int EstadoBoton1, int EstadoBoton2) {
+  char stringgmt[4];
+  char stringhora[6];
+  struct tm timeinfo;
 
   switch (estado) {
     case P1:
+      getLocalTime(&timeinfo);
+      strftime(stringhora, sizeof(stringhora), "%H:%M", &timeinfo);
       u8g2.clearBuffer();
       u8g2.setFont(u8g2_font_ncenB08_tr);
-      u8g2.drawStr(15, 15, "Temp:");
-      u8g2.drawStr(60, 15, stringt);
-      u8g2.drawStr(15, 30, "Hora:");
-      u8g2.drawStr(60, 30, stringtiempo);
+      u8g2.drawStr(15, 15, "Hora:");
+      u8g2.drawStr(60, 15, stringhora);
       u8g2.sendBuffer();
+
       if (EstadoBoton1 == LOW && EstadoBoton2 == LOW) {
         estado = ESPERA1;
       }
@@ -95,41 +82,56 @@ void Maquina(float t, int EstadoBoton1, int EstadoBoton2) {
         estado = P2;
       }
       break;
+
     case ESPERA2:
       if (EstadoBoton1 == HIGH && EstadoBoton2 == HIGH) {
         estado = P1;
       }
       break;
+
     case P2:
-      sprintf(stringgmt, "%d", gmt/3600);
+      sprintf(stringgmt, "GMT%+d", gmt / 3600);
       u8g2.clearBuffer();
       u8g2.setFont(u8g2_font_ncenB08_tr);
-      u8g2.drawStr(15, 30, "GMT:");
-      u8g2.drawStr(60, 30, stringgmt);
+      u8g2.drawStr(15, 15, "GMT:");
+      u8g2.drawStr(60, 15, stringgmt);
       u8g2.sendBuffer();
+
       if (EstadoBoton1 == LOW && EstadoBoton2 == LOW) {
         estado = ESPERA2;
       }
-      if(EstadoBoton1 == LOW && EstadoBoton1 == HIGH) {
+      if (EstadoBoton1 == LOW && EstadoBoton2 == HIGH) {
         estado = SUMAGMT;
-      } 
+      }
       if (EstadoBoton2 == LOW && EstadoBoton1 == HIGH) {
         estado = RESTAGMT;
       }
       break;
 
     case SUMAGMT:
-      if (gmt < 43200) {
-        gmt += 3600;
+      if (EstadoBoton1 == HIGH) {
+        if (gmt < 43200) {  // +12 horas máx
+          gmt += 3600;
+          configTime(gmt, daylightOffset_sec, ntpServer);
+        }
+        estado = P2;
       }
-      estado = P2;
+      if (EstadoBoton2 == LOW && EstadoBoton1 == LOW) {
+        estado = ESPERA2;
+      }
       break;
 
     case RESTAGMT:
-      if (gmt > -43200) {
-        gmt -= 3600;
+      if (EstadoBoton2 == HIGH) {
+        if (gmt > -43200) {  // -12 horas mín
+          gmt -= 3600;
+          configTime(gmt, daylightOffset_sec, ntpServer);
+        }
+        estado = P2;
       }
-      estado = P2;
+      if (EstadoBoton2 == LOW && EstadoBoton1 == LOW) {
+        estado = ESPERA2;
+      }
       break;
   }
 }

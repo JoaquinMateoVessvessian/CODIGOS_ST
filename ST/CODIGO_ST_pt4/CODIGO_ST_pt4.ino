@@ -58,8 +58,7 @@ void maquina_de_estados(float temperatura, int EstadoBoton1, int EstadoBoton2) {
       u8g2.sendBuffer();
       if (temperatura > Umbral) {
         digitalWrite(25, HIGH);
-      }
-      else{
+      } else {
         digitalWrite(25, LOW);
       }
       if (EstadoBoton1 == LOW && EstadoBoton2 == LOW) {
@@ -67,15 +66,15 @@ void maquina_de_estados(float temperatura, int EstadoBoton1, int EstadoBoton2) {
       }
       break;
     case ESPERA1:
-    if (EstadoBoton1 == HIGH && EstadoBoton2 == HIGH) {
-    Estado = P2;
-    }
-    break;
+      if (EstadoBoton1 == HIGH && EstadoBoton2 == HIGH) {
+        Estado = P2;
+      }
+      break;
     case ESPERA2:
-    if (EstadoBoton1 == HIGH && EstadoBoton2 == HIGH) {
-    Estado = P1;
-    }
-    break;
+      if (EstadoBoton1 == HIGH && EstadoBoton2 == HIGH) {
+        Estado = P1;
+      }
+      break;
     case P2:
       u8g2.clearBuffer();
       sprintf(sUmbral, "%d", Umbral);
@@ -85,26 +84,35 @@ void maquina_de_estados(float temperatura, int EstadoBoton1, int EstadoBoton2) {
       if (EstadoBoton1 == LOW && EstadoBoton2 == LOW) {
         Estado = ESPERA2;
       }
-      if (temperatura > Umbral) {
+      if (temperatura >= Umbral) {
         digitalWrite(25, HIGH);
-      }
-      else{
+      } else {
         digitalWrite(25, LOW);
       }
-      if (EstadoBoton1 == LOW && EstadoBoton2==HIGH) {
+      if (EstadoBoton1 == LOW && EstadoBoton2 == HIGH) {
         Estado = SUMA;
       }
-      if (EstadoBoton2 == LOW && EstadoBoton1==HIGH) {
+      if (EstadoBoton2 == LOW && EstadoBoton1 == HIGH) {
         Estado = RESTA;
       }
       break;
     case SUMA:
-      Umbral = Umbral + 1;
-      Estado = P2;
+      if (EstadoBoton1 == HIGH) {
+        Umbral = Umbral + 1;
+        Estado = P2;
+      }
+      if (EstadoBoton1 == LOW && EstadoBoton2 == LOW) {
+        Estado = ESPERA2;
+      }
       break;
     case RESTA:
-      Umbral = Umbral - 1;
-      Estado = P2;
+      if (EstadoBoton2 == HIGH) {
+        Umbral = Umbral - 1;
+        Estado = P2;
+      }
+      if (EstadoBoton1 == LOW && EstadoBoton2 == LOW) {
+        Estado = ESPERA2;
+      }
       break;
   }
 }
